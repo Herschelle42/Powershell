@@ -1,0 +1,108 @@
+function Compress-ChangedFiles {
+<#
+.SYNOPSIS
+  Zips changed files from a given directory location.
+.DESCRIPTION
+  Given a directory location and number of days collect all the files that have 
+  been changed in the last x days, copies these files to a temporary loccation,
+  zips the temporay location, deletes the temporary location and launches the 
+  resulting zip file.
+.INPUTS
+  [string]
+.OUTPUTS
+  
+.PARAMETER Path
+  The directory path to search. Default is %USERPROFILE%. C:\users\username
+.PARAMETER Days
+  How recently the files have been updated to search for. To find all files 
+  changed in the last seven (7) days set to 7. Default is 30.
+.PARAMETER ZipPath
+  The full path and name of the Zip file to be created. If ZipPath is not 
+  specified function will only report.
+.PARAMETER TempDir
+  The temporary directory location where a copy of the changed files will be
+  copied so that the zip can be created. Default is: ENV:temp\<random name 2>
+.NOTES
+  Author: Clint Fritz
+  
+#>
+[CmdletBinding()]
+Param(
+    [Parameter(Mandatory=$false)]
+    [ValidateScript({if (Test-Path -Path $_) { $true } else { throw "Invalid path $_" } })]
+    [string]$Path=$env:USERPROFILE,
+    [Parameter(Mandatory=$false)]
+    [int]$Days=30,
+    [Parameter(Mandatory=$false)]
+    [string]$ZipPath,
+    [Parameter(Mandatory=$false)]
+    [string]$TempDir="$env:temp\$(([System.IO.Path]::GetRandomFileName()).Split(‘.’)[0])"
+
+)#end Param block
+
+    Begin {
+        Write-Verbose "[INFO] PARAMETER Path       : $($Path)"
+        Write-Verbose "[INFO] PARAMETER Days       : $($Days)"
+        Write-Verbose "[INFO] PARAMETER ZipPath    : $($ZipPath)"
+        Write-Verbose "[INFO] PARAMETER TempDir    : $($TempDir)"
+
+        $sizeKB = @{name="SizeKB"; Expression ={[Math]::Ceiling($_.Length/1KB)}}
+        $sizeMB = @{name="SizeMB"; Expression ={[Math]::Ceiling($_.Length/1MB)}}
+
+        $ISODate = Get-Date -uFormat "%Y-%m-%d"
+        $ISODateTime = Get-Date -uFormat "%Y-%m-%d-%H-%M-%S"
+
+        function Compress-Directory($Path, $Source)
+        {
+           Add-Type -Assembly System.IO.Compression.FileSystem
+           $compressionLevel = [System.IO.Compression.CompressionLevel]::Optimal
+           [System.IO.Compression.ZipFile]::CreateFromDirectory($Source, $Path, $compressionLevel, $false)
+        }
+
+    }#end begin block
+
+    Process {
+
+        $filelist = Get-ChildItem -Path $path -Recurse -File | ? { $_.LastWriteTime -gt (Get-Date).AddDays(-$days) }
+
+        $totalSizeMB = [math]::Ceiling($(($filelist | Measure-Object -Property Length -Sum).Sum/1MB))
+
+        Write-Output "Last $($days) days of file changes."
+        Write-Output "Number of files: $($filelist.Count)"
+        Write-output "Total Size (MB): $($totalSizeMB)"
+
+        Write-output "The 5 largest files are: "
+        $filelist | Sort Length -Descending | Select $sizeMB, Name, Directory | Select -First 5 | ft -AutoSize
+
+        if ($ZipPath)
+        {
+            Write-Verbose "[INFO] Create Temp Dir : $($tempDir)"
+            New-Item -Path $tempDir -ItemType Directory | Out-Null
+
+            Write-Verbose "[INFO] Copy changed files to temporary directory"
+            foreach ($file in $filelist) {
+                Write-Output "[INFO]Copying: $($file.Name)"
+                #Create the same directory structure in the temporary directory
+                $tempDest = New-Item -Path ($file.DirectoryName -replace [Regex]::Escape($path), [Regex]::Escape($tempDir)) -ItemType Directory -Force
+                #Copy the file to the temporary directory
+                Copy-Item -Path $file.FullName -Destination $tempDest -Force
+            }#end foreach file
+
+            Write-Verbose "[INFO] Zip files and folders in the temporary directory."
+            Compress-Directory -Path $ZipPath -Source $tempDir
+
+            ii $ZipPath
+
+            Write-Verbose "[INFO] Delete temporary directory"
+            if (Test-Path -Path $tempDir)
+            {
+                Remove-Item -Path $tempDir -Recurse -Force
+            }#end if
+        } else {
+            Write-output "No ZipPath specified, therefore no Zip file created."
+        }#end if zippath
+
+    }#end process block
+
+}#end function
+
