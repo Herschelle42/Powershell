@@ -1,0 +1,57 @@
+function Get-ADSIGroupMembership
+{
+<#
+.SYNOPSIS
+  Get the usernames and sam account names of a given Group
+
+
+#>
+[CmdletBinding()]
+Param(
+    [string]$Name
+)#end param
+
+    Begin
+    {
+        Write-Verbose "[INFO] Group Name: $($Name)"
+    }#end Begin
+
+    Process
+    {
+        $groupList = Get-ADSIADGroup -Name $Name
+
+        if ($groupList)
+        {
+            #in case there are multiple groups found?
+            foreach($group in $groupList)
+            {
+                $groupName = $group.Properties.samaccountname
+                Write-Verbose "[INFO] Found group: $($groupName)"
+                foreach ($user in ($group).properties.member | sort)
+                {
+                    Write-Verbose "[INFO] Found user: $($user)"
+                    #have to get just the username to be able to look them up.
+                    $userName = $user.substring(3,$user.IndexOf(",")-3)
+                    $logonId = (Get-ADSIADuser -name $userName).Properties.samaccountname
+
+                    $hash = [ordered] @{}
+                    $hash.Group = $($groupName)
+                    $hash.Name = $($userName)
+                    $hash.SamAccountName = $logonId
+                    $object = New-Object PSObject -Property $hash
+                    $object
+
+                }#end foreach user
+            }#end foreach group
+        } else {
+            Write-Output "No Group Found with the name: $($Name)"
+        }
+        
+    }#end Process
+
+    End
+    {
+        
+    }#end End block
+
+}
