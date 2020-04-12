@@ -1,0 +1,21 @@
+<#
+This specific example is extracting xml files.
+Amend the file matching to what ever you like.
+#>
+$zipFile = Get-ChildItem -Path "C:\temp\myzip.zip"
+$outputPath = "C:\temp\"
+
+[Void][Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem')
+
+$zipObject = [IO.Compression.ZipFile]::OpenRead("$($zipFile.FullName)")
+foreach($file in ($zipObject.Entries) | ? {$_.name -match "xml$" } ) {
+
+    #If a outputpath has been provided extracting the file to this location.
+    if ($outputPath -and (Test-Path -Path $outputPath)) {
+        [System.IO.Compression.ZipFileExtensions]::ExtractToFile($file, "$($OutputPath)\$($file.Name)", $true)
+    }
+                    
+}#end foreach file in ZipObject
+
+#Close the zip object
+$zipObject.Dispose()

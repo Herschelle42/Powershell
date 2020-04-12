@@ -1,0 +1,114 @@
+function Mount-DefaultUserRegistryKey {
+<#
+.SYNOPSIS
+  Loads the default user registry hive from ntuser.dat into the registry for editing.
+.DESCRIPTION
+  When a user logs onto a system for the first time, provided they are not using
+  roaming profiles, their personal HKEY_CURRENT_USER root is populated from ntuser.dat
+  To make registry changes so that any new user receives them requires changes to
+  ntuser.dat. This is acheived by loading this file into a location within the registry,
+  manipulating that location as if any other part of the registry and finally unloading
+  the location.
+  Requires that the user has nt local administration rights to the system.
+  To unmount the registry hive when finished: & reg.exe unload "HKLM\Default"
+.INPUTS
+  [string]
+  [Switch]
+.OUTPUTS
+  
+.PARAMETER Path
+  The path to the ntuser.dat file. Default is C:\Users\Default\ntuser.dat
+.PARAMETER Root
+  The registry key root where to load the ntuser.dat Valid locations are HKCU and HKLM. Default is HKLM
+.PARAMETER Key
+  The key on the root that the ntuser.dat should be loaded into. Default is "Default"
+.PARAMETER Backup
+  Switch whether to make a backup or not. Default is TRUE. 
+.PARAMETER BackupPath
+  The name of the backup file. Default is the following format: ntuser.data.backup.YYYY-MM-DD.
+.PARAMETER Overwrite
+  Chose whether to overwrite the back up if it already exists. Default is "False"
+.EXAMPLE
+  Mount-DefaultUserRegistryKey
+.NOTES
+  Author: Clint Fritz
+  
+#>
+[CmdletBinding()]
+Param(
+    [Parameter(Mandatory=$false)]
+    [ValidateScript({if (Test-Path -Path $_) { $true } else { throw "Invalid path $_" } })]
+    $Path="C:\Users\Default\ntuser.dat",
+    [Parameter(Mandatory=$false)]
+    [ValidateSet("HKLM","HKCU")]
+    [string]$Root="HKLM",
+    [Parameter(Mandatory=$false)]
+    [string]$Key="Default",
+    [Parameter(Mandatory=$false)]
+    [Switch]$Backup=$true,
+    [Parameter(Mandatory=$false)]
+    [string]$BackupPath=$("$($Path).backup.$(Get-Date -uFormat '%Y-%m-%d')")
+    #[Parameter(Mandatory=$false)]
+    #[Switch]$Overwrite=$false
+)#end Param block
+
+    Begin {
+        Write-Verbose "[INFO] PARAMETER Path       : $($Path)"
+        Write-Verbose "[INFO] PARAMETER Root       : $($Root)"
+        Write-Verbose "[INFO] PARAMETER Key        : $($Key)"
+        Write-Verbose "[INFO] PARAMETER Backup     : $($Backup)"
+        Write-Verbose "[INFO] PARAMETER BackupPath : $($BackupPath)"
+        #Write-Verbose "[INFO] PARAMETER Overwrite  : $($Overwrite)"
+    }#end begin block
+
+    Process {
+
+        Write-Verbose "[INFO] Test path to ntuser.dat"
+        If (Test-Path -Path $Path) {
+
+            #Get a file object of ntuser.dat
+            $ntuserFile = Get-ChildItem -Path $Path -Hidden
+
+            #some times it is not picked up with Hidden (on 2016). Dont know why.
+            if (-not $ntuserFile) {
+                $ntuserFile = Get-ChildItem -Path $Path
+            }
+
+            if($Backup) {
+                Write-Verbose "[INFO] Backup ntuser.dat"
+                #Does not seem to work, overwrites anyway cannot seem to get it to stop!
+                #if ($Overwrite) {
+                #    Write-Verbose "[INFO] - overwrite existing"
+                #    $Path | Copy-Item -Destination "$($BackupPath)" -Force
+                #} else {
+                    $Path | Copy-Item -Destination "$($BackupPath)" -Force:$false
+                #}#end 
+            } else {
+                Write-Verbose "[WARNING] ntuser.dat chosen by user _NOT_ to backup."
+            }#end if backup ntuser.dat
+
+            Write-Verbose "[INFO] Load ntuser.dat into registry"
+            #& reg.exe load $regHive $ntuserPath
+            $loadResult = & reg.exe load "$($root)\$($Key)" "$($Path)"
+            Write-Verbose $($loadResult | Out-String)
+
+            if (Get-ChildItem -Path "$($root):$($Key)") {
+                Write-Verbose "[INFO] ntuser.dat successfully loaded"
+                Return $true
+            } else {
+                Write-Error "[ERROR] !!! ntuser.dat not loaded correctly."
+                Return $false
+            }#end if 
+
+        } else {
+            Write-Error "[ERROR] !!! File not found: $($Path)"
+
+        }#end if test-path ntuser.dat
+
+    }#end process block
+
+    End {
+        Write-Verbose "[INFO] Mount-DefaultUserRegistryKey - End"
+    }
+
+}#end function

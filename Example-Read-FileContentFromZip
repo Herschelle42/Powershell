@@ -1,0 +1,33 @@
+$zipfile = Get-ChildItem "C:\temp\myzip.zip"
+
+#Open the Zip file for reading
+$zipObject = [IO.Compression.ZipFile]::OpenRead("$($zipFile.FullName)")
+
+#finding only xml files
+foreach($file in ($zipObject.Entries) | ? {$_.name -match "xml$" } ) {
+    #Open the file to read the contents
+    $fileStream = $file.Open()
+
+    $reader = New-Object IO.StreamReader($fileStream)
+    $fileContent = $reader.ReadToEnd()
+
+    $reader.Close()
+    $fileStream.Close()
+
+    #Create an output object
+    $hash = [ordered]@{}
+    $hash.ZipFileName = $zipFile.Name
+    $hash.ZipFileFullName = $zipFile.FullName
+    $hash.Application = $AppDirectory.Name
+    $hash.ApplicationVersion = $versionDirectory.Name
+    $hash.XMLFileName = $file.Name
+    $hash.XMLFileZipPath = $File.FullName
+    $hash.XMLFileContent = $fileContent
+    $object = new-object PSObject -property $hash
+    $object
+                    
+}#end foreach file in ZipObject
+
+
+#Close the zip object
+$zipObject.Dispose()
