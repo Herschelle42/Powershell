@@ -34,7 +34,7 @@ param (
     $export = "" | Select-Object Username, EncryptedPassword
  
     # Give object a type name which can be identified later
-    $export.PSObject.TypeNames.Insert(0,’ExportedPSCredential’)
+    $export.PSObject.TypeNames.Insert(0,'ExportedPSCredential')
 
     $export.Username = $Username
  
