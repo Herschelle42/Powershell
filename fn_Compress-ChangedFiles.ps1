@@ -37,7 +37,7 @@ function Compress-ChangedFiles {
   Compress-ChangedFiles -Path "$($env:USERPROFILE)\Documents\Scripts" -Days 7 -ZipPath "$($env:USERPROFILE)\Documents\Scripts-$($ISODateTime).zip"
 .NOTES
   Author: Clint Fritz
-  Version: 0.3
+  Version: 0.4
 #>
 [CmdletBinding()]
 Param(
@@ -57,7 +57,7 @@ Param(
     [Parameter(Mandatory=$false)]
     [String]$TempDir="$env:temp\$(([System.IO.Path]::GetRandomFileName()).Split(‘.’)[0])"
 
-)#end Param block
+)
 
     Begin {
         #Trim any trailing backslash or forward slash. You never know.
@@ -78,17 +78,21 @@ Param(
         $ExcludeDirectoryRegex = $ExcludeDirectory -join "|"
 
         #Test if ZipPath already exists and the Overwrite parameter
-        if((Test-Path -Path $ZipPath) -and -not $Overwrite)
-        {
-            throw "The Zip file: $($ZipPath) already exists. Terminating."
-        }
+        if ($ZipPath) {
+            if((Test-Path -Path $ZipPath) -and -not $Overwrite)
+            {
+                throw "The Zip file: $($ZipPath) already exists. Terminating."
+            }
 
-        #Delete ZipFile if it already exists and user and selected to OverWrite the file
-        if((Test-Path -Path $ZipPath) -and $Overwrite)
-        {
-            Write-Verbose "[INFO] Deleting existing zip file: $($ZipPath)"
-            Remove-Item -Path $ZipPath -Confirm:$false
-        }#end if testpath and overwrite
+            #Delete ZipFile if it already exists and user and selected to OverWrite the file
+            if((Test-Path -Path $ZipPath) -and $Overwrite)
+            {
+                Write-Verbose "[INFO] Deleting existing zip file: $($ZipPath)"
+                Remove-Item -Path $ZipPath -Confirm:$false
+            }#end if testpath and overwrite
+        } else {
+            Write-Verbose "[INFO] No Zip Path specified."
+        }
 
         function Compress-Directory($Path, $Source)
         {
@@ -97,7 +101,7 @@ Param(
            [System.IO.Compression.ZipFile]::CreateFromDirectory($Source, $Path, $compressionLevel, $false)
         }
 
-    }#end begin block
+    }
 
     Process {
 
@@ -107,7 +111,7 @@ Param(
             $filelist = Get-ChildItem -Path $path -Recurse -File | ? { $_.LastWriteTime -gt (Get-Date).AddDays(-$days) -and $_.Directory -notmatch $ExcludeDirectoryRegex }
         } else {
             $filelist = Get-ChildItem -Path $path -Recurse -File | ? { $_.LastWriteTime -gt (Get-Date).AddDays(-$days) }
-        }#end if exDirRegex
+        }
 
         $totalSizeMB = [math]::Ceiling($(($filelist | Measure-Object -Property Length -Sum).Sum/1MB))
 
@@ -116,7 +120,12 @@ Param(
         Write-Verbose "Total Size (MB): $($totalSizeMB)"
 
         Write-Verbose "The 5 largest files are: "
-        $filelist | Sort Length -Descending | Select $sizeMB, Name, Directory | Select -First 5 | ft -AutoSize
+        $biggestFileSize = $filelist | Sort Length -Descending | select -First 1 | Select -ExpandProperty Length
+        if ($biggestFileSize -gt 500000) {
+            $filelist | Sort Length -Descending | Select $sizeMB, Name, Directory | Select -First 5 | ft -AutoSize
+        } else {
+            $filelist | Sort Length -Descending | Select $sizeKB, Name, Directory | Select -First 5 | ft -AutoSize
+        }
 
         if ($ZipPath)
         {
@@ -132,7 +141,7 @@ Param(
                 Write-Debug "[DEBUG] tempDest: $($tempDest)"
                 #Copy the file to the temporary directory
                 Copy-Item -Path $file.FullName -Destination $tempDest -Force
-            }#end foreach file
+            }
 
             Write-Verbose "[INFO] Zip files and folders in the temporary directory."
             Compress-Directory -Path $ZipPath -Source $tempDir
@@ -140,23 +149,23 @@ Param(
             if(-not (Test-Path -Path $ZipPath))
             {
                 Write-Warning "[WARN] ZipPath: $($ZipPath) not found"
-            }#end if test zippath
+            }
 
             #Launch (open) the resulting zip file if requested.
             if($Launch)
             {
                 Invoke-Item -Path $ZipPath
-            }#end if Launch
+            }
 
             Write-Verbose "[INFO] Delete temporary directory"
             if (Test-Path -Path $tempDir)
             {
                 Remove-Item -Path $tempDir -Recurse -Force
-            }#end if
+            }
         } else {
             Write-output "No ZipPath specified, therefore no Zip file created."
-        }#end if zippath
+        }
 
-    }#end process block
+    }
 
-}#end function
+}
