@@ -94,7 +94,7 @@ Param
             Write-Verbose "[INFO] Returning membership only"
             foreach ($item in $searchResult)
             {
-                foreach ($group in $searchResult.Properties.memberof | sort)
+                foreach ($group in $item.Properties.memberof | sort)
                 {
                     $hash = [ordered]@{}
                     $hash.Name = $item.Properties | % { $_.name }
