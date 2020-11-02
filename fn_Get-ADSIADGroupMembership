@@ -2,19 +2,20 @@ function Get-ADSIADGroupMembership
 {
 <#
 .SYNOPSIS
-  Get the usernames and sam account names of a given Group
-
+  Get the usernames and sam account names of the members of a given group name
+.PARAMETER Name
+  Name of the AD Group
 
 #>
 [CmdletBinding()]
 Param(
     [string]$Name
-)#end param
+)
 
     Begin
     {
         Write-Verbose "[INFO] Group Name: $($Name)"
-    }#end Begin
+    }
 
     Process
     {
@@ -32,7 +33,7 @@ Param(
                     Write-Verbose "[INFO] Found user: $($user)"
                     #have to get just the username to be able to look them up.
                     $userName = $user.substring(3,$user.IndexOf(",")-3)
-                    $logonId = (Get-ADSIADuser -name $userName).Properties.samaccountname
+                    $logonId = (Get-ADSIADuser -name $userName).samaccountname
 
                     $hash = [ordered] @{}
                     $hash.Group = $($groupName)
@@ -47,11 +48,11 @@ Param(
             Write-Output "No Group Found with the name: $($Name)"
         }
         
-    }#end Process
+    }
 
     End
     {
         
-    }#end End block
+    }
 
 }
