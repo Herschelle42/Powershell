@@ -39,22 +39,49 @@ Param
 
     Begin
     {
+        Write-Verbose "[INFO] Begin"
+        Write-Verbose "[INFO] ParameterSet: $($PSCmdlet.ParameterSetName)"
     }
     Process
     {
+
         if ($PSCmdlet.ParameterSetName -eq "Name")
         {
-            ([adsisearcher]"(&(objectclass=group)(name=*$Name*))").FindAll()
+            $searchResult = foreach ($itemName in $Name)
+            {
+                Write-Verbose "[INFO] ItemName: $($itemName)"
+                ([adsisearcher]"(&(objectclass=group)(name=*$itemName*))").FindAll()
+            }
         }
 
         #does not work for some reason I cannot determine at this time
         if ($PSCmdlet.ParameterSetName -eq "DN")
         {
-            ([adsisearcher]"(&(objectclass=group)(distinguishedname=*$DN*))").FindAll()
+            $searchResult = foreach ($itemName in $DN)
+            {
+                Write-Verbose "[INFO] ItemName: $($itemName)"
+                ([adsisearcher]"(&(objectclass=group)(distinguishedname=*$itemName*))").FindAll()
+            }
+        }
+
+        Write-Verbose "[INFO] Returning result as powershell object"
+        #create a custom object
+        foreach ($item in $searchResult)
+        {
+            $hash = [ordered]@{}
+            $hash.PSTypeName = "Group.Information"
+            $hash.Path = $item.Path
+            foreach ($keyName in $item.Properties.Keys | Sort)
+            {
+                $hash.$($keyName) = $item.Properties | % { $_.$keyName }
+            }
+            $object = New-Object -TypeName PSObject -Property $hash
+            $object
         }
 
     }
     End
     {
+        Write-Verbose "[INFO] End"
     }
 }
