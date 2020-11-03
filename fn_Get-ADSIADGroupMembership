@@ -5,7 +5,12 @@ function Get-ADSIADGroupMembership
   Get the usernames and sam account names of the members of a given group name
 .PARAMETER Name
   Name of the AD Group
-
+.NOTES
+  Author: Clint Fritz
+  TODO: Fix user lookup to lookup via LDAP Name. As multiple users with the same name
+        get caught up and mashed together.
+        Change the object creation as Get-ADSIADGroup output has changed. Properties
+        parameter no longer valid.
 #>
 [CmdletBinding()]
 Param(
@@ -52,7 +57,7 @@ Param(
 
     End
     {
-        
+        Write-Verbose "[INFO] End"
     }
 
 }
