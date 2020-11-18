@@ -1,12 +1,16 @@
 function Get-ADSIADGroup
 {
 <#
-.Synopsis
+.SYNOPSIS
    Get AD Group object using ADSI
 .DESCRIPTION
    Not all servers and workstations have RSAT installed. This is a small function 
    using ADSI to get a group details via Name or DN.
    Only searches the current Domain this powershell session is a part of.
+.PARAMETER Name
+  Name or partial name of the group to search for.
+.PARAMETER DN
+  The DN of the group to search for.
 .INPUTS
   [String[]]
 .EXAMPLE
