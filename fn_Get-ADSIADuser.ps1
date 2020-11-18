@@ -1,7 +1,7 @@
-function Get-ADSIADuser
+function Get-ADSIADUser
 {
 <#
-.Synopsis
+.SYNOPSIS
    Get AD User object using ADSI
 .DESCRIPTION
    Not all servers and workstations have RSAT installed. This is a small function 
@@ -9,7 +9,9 @@ function Get-ADSIADuser
    Only searches the current Domain this powershell session is a part of.
 .INPUTS
   [String[]]
-
+.PARAMETER ShowAllProperties
+  This is a workaround, due to security restrictions onsite, that prevents the Update-DataType
+  
 .EXAMPLE
   PS> Get-ADSIADUser -Name "Jane Doe"
 
@@ -49,6 +51,7 @@ Param
 (
     # This is the display Name of the person (usually <first> <last>)
     [Parameter(Mandatory=$true,
+                ValueFromPipeline,
                 ParameterSetName='Name',
                 Position=0)]
     [String[]]
@@ -61,14 +64,37 @@ Param
     [Alias("UserId","LogonId","Logon")]
     [String[]]
     $SamAccountName,
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false,
+                ParameterSetName='Name')]
+    [Parameter(Mandatory=$false,
+                ParameterSetName='SAM')]
+    [Parameter(Mandatory=$false,
+                ParameterSetName='Showall')]
+    [Switch]
+    $ShowAllProperties=$false,
     #Display group name membership only. 
+    [Parameter(Mandatory=$false,
+                ParameterSetName='Name')]
+    [Parameter(Mandatory=$false,
+                ParameterSetName='SAM')]
+    [Parameter(Mandatory=$false,
+                ParameterSetName='Membership')]
     [Switch]
     $Membership=$false
 )
 
     Begin
     {
+        #Used for the ShowAllProperties parameter
+        $DefaultDisplaySet = ('name',
+            'samaccountname',
+            'userprincipalname',
+            @{Name="Lockout Time"; Expression={if($_.lockouttime -gt 0) {[datetime]::FromFileTime($_.lockouttime)} else {"0"} }},
+            @{Name="Last Logon"; Expression={[datetime]::FromFileTime($_.lastlogon)}},
+            @{Name="Account Expires"; Expression={[datetime]::FromFileTime($_.accountexpires)}},
+            @{Name="Bad Password Time"; Expression={[datetime]::FromFileTime($_.badpasswordtime)}}
+        )
+
     }
     Process
     {
@@ -105,18 +131,27 @@ Param
                 }#end foreach group
             }
         } else {
+
+
             Write-Verbose "[INFO] Returning result as powershell object"
             #create a custom object
             foreach ($item in $searchResult)
             {
                 $hash = [ordered]@{}
+                $hash.PSTypeName = "User.Information"
                 foreach ($keyName in $item.Properties.Keys | Sort)
                 {
                     $hash.$($keyName) = $item.Properties | % { $_.$keyName }
                 }
                 $object = New-Object -TypeName PSObject -Property $hash
-                $object
+                if ($ShowAllProperties) {
+                    $object
+                } else {
+                    Write-Verbose "[INFO] Return only a subet."
+                    $object | Select $DefaultDisplaySet
+                }
             }
+            
         }
     }
     End
