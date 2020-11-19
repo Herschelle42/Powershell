@@ -9,8 +9,6 @@ function Get-ADSIADGroupMembership
   Author: Clint Fritz
   TODO: Fix user lookup to lookup via LDAP Name. As multiple users with the same name
         get caught up and mashed together.
-        Change the object creation as Get-ADSIADGroup output has changed. Properties
-        parameter no longer valid.
 #>
 [CmdletBinding()]
 Param(
@@ -31,9 +29,9 @@ Param(
             #in case there are multiple groups found?
             foreach($group in $groupList)
             {
-                $groupName = $group.Properties.samaccountname
+                $groupName = $group.samaccountname
                 Write-Verbose "[INFO] Found group: $($groupName)"
-                foreach ($user in ($group).properties.member | sort)
+                foreach ($user in ($group).member | sort)
                 {
                     Write-Verbose "[INFO] Found user: $($user)"
                     #have to get just the username to be able to look them up.
