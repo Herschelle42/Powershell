@@ -79,6 +79,12 @@ Param
             {
                 $hash.$($keyName) = $item.Properties | % { $_.$keyName }
             }
+
+            #for some reason, some groups do not show members under member but some strange variation.
+            if(-not($hash.member) -and ($hash.Keys | ? { $_ -match "member;range" }) ) {
+                $keyName = $hash.Keys | ? { $_ -match "member;range" }
+                $hash.member = $hash.$($keyname)
+            }
             $object = New-Object -TypeName PSObject -Property $hash
             $object
         }
