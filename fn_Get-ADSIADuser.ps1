@@ -1,3 +1,4 @@
+
 function Get-ADSIADUser
 {
 <#
@@ -157,10 +158,17 @@ Param
                 foreach ($keyName in $item.Properties.Keys | Sort)
                 {
                     $hash.$($keyName) = $item.Properties | % { $_.$keyName }
+
                     #Convert the ObjectSID byte object to proper SID String value
                     if($keyName -eq "objectsid") {
                         $hash.objectsidstring = (New-Object System.Security.Principal.SecurityIdentifier($hash.objectsid,0)).Value
                     }
+
+                    #Convert the ObjectSID byte object to proper SID String value
+                    if($keyName -eq "objectguid") {
+                        $hash.objectguidstring = (New-Object -TypeName Guid -ArgumentList @(,$hash.objectguid)).guid
+                    }
+                    
                 }
 
 
