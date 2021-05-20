@@ -1,4 +1,3 @@
-
 function Get-ADSIADUser
 {
 <#
@@ -65,6 +64,12 @@ Param
     [Alias("UserId","LogonId","Logon")]
     [String[]]
     $SamAccountName,
+    [Parameter(Mandatory=$true,
+            ValueFromPipelineByPropertyName=$true,
+            ParameterSetName="SID",
+            Position=0)]
+    [String[]]
+    $SID,
     [Parameter(Mandatory=$false,
                 ParameterSetName='Name')]
     [Parameter(Mandatory=$false,
@@ -116,6 +121,15 @@ Param
             }
         }
 
+        if ($PSCmdlet.ParameterSetName -eq "SID")
+        {
+            $searchResult = foreach ($itemName in $SID)
+            {
+                Write-Verbose "[INFO] ItemName: $($itemName)"
+                ([adsisearcher]"(&(objectclass=user)(objectSID=*$itemName*))").FindAll()
+            }
+        }
+
         if($Membership)
         {
             Write-Verbose "[INFO] Returning membership only"
@@ -143,7 +157,13 @@ Param
                 foreach ($keyName in $item.Properties.Keys | Sort)
                 {
                     $hash.$($keyName) = $item.Properties | % { $_.$keyName }
+                    #Convert the ObjectSID byte object to proper SID String value
+                    if($keyName -eq "objectsid") {
+                        $hash.objectsidstring = (New-Object System.Security.Principal.SecurityIdentifier($hash.objectsid,0)).Value
+                    }
                 }
+
+
                 $object = New-Object -TypeName PSObject -Property $hash
                 if ($ShowAllProperties) {
                     $object
