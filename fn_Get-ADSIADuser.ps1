@@ -1,3 +1,4 @@
+
 function Get-ADSIADUser
 {
 <#
@@ -147,7 +148,7 @@ Param
                 if ($ShowAllProperties) {
                     $object
                 } else {
-                    Write-Verbose "[INFO] Return only a subet."
+                    Write-Verbose "[INFO] Return only a subset."
                     $object | Select $DefaultDisplaySet
                 }
             }
