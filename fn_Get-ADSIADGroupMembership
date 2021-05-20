@@ -1,4 +1,4 @@
-function Get-ADSIADGroupMembership
+function Get-ADSIADGroupMembers
 {
 <#
 .SYNOPSIS
