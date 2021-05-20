@@ -38,7 +38,13 @@ Param
                 Position=0)]
     [Alias("Path")]
     [String[]]
-    $DN
+    $DN,
+    [Parameter(Mandatory=$true,
+                ValueFromPipelineByPropertyName=$true,
+                ParameterSetName="SID",
+                Position=0)]
+    [String[]]
+    $SID
 )
 
     Begin
@@ -65,6 +71,15 @@ Param
             {
                 Write-Verbose "[INFO] ItemName: $($itemName)"
                 ([adsisearcher]"(&(objectclass=group)(distinguishedname=*$itemName*))").FindAll()
+            }
+        }
+        
+        if ($PSCmdlet.ParameterSetName -eq "SID")
+        {
+            $searchResult = foreach ($itemName in $SID)
+            {
+                Write-Verbose "[INFO] ItemName: $($itemName)"
+                ([adsisearcher]"(&(objectclass=group)(objectSID=*$itemName*))").FindAll()
             }
         }
 
