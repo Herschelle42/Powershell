@@ -12,45 +12,47 @@ function Get-ADSIADGroupMembers
 #>
 [CmdletBinding()]
 Param(
-    [string]$Name
+    [string[]]$Name
 )
 
     Begin
     {
-        Write-Verbose "[INFO] Group Name: $($Name)"
+        Write-Verbose "[INFO] Group Names: $($Name)"
     }
 
     Process
     {
-        $groupList = Get-ADSIADGroup -Name $Name
-
-        if ($groupList)
+        foreach ($groupName in $name) 
         {
-            #in case there are multiple groups found?
-            foreach($group in $groupList)
+            Write-Verbose "[INFO] Group Name: $($groupName)"
+            $groupList = Get-ADSIADGroup -Name $groupName
+
+            if ($groupList)
             {
-                $groupName = $group.samaccountname
-                Write-Verbose "[INFO] Found group: $($groupName)"
-                foreach ($user in ($group).member | sort)
+                #in case there are multiple groups found?
+                foreach($group in $groupList)
                 {
-                    Write-Verbose "[INFO] Found user: $($user)"
-                    #have to get just the username to be able to look them up.
-                    $userName = $user.substring(3,$user.IndexOf(",")-3)
-                    $logonId = (Get-ADSIADuser -name $userName).samaccountname
+                    Write-Verbose "[INFO] Found group: $($group.samaccountname)"
+                    foreach ($user in ($group).member | sort)
+                    {
+                        Write-Verbose "[INFO] Found user: $($user)"
+                        #have to get just the username to be able to look them up.
+                        $userName = $user.substring(3,$user.IndexOf(",")-3)
+                        $logonId = (Get-ADSIADuser -name $userName).samaccountname
 
-                    $hash = [ordered] @{}
-                    $hash.Group = $($groupName)
-                    $hash.Name = $($userName)
-                    $hash.SamAccountName = $logonId
-                    $object = New-Object PSObject -Property $hash
-                    $object
+                        $hash = [ordered] @{}
+                        $hash.Group = $($group.samaccountname)
+                        $hash.Name = $($userName)
+                        $hash.SamAccountName = $logonId
+                        $object = New-Object PSObject -Property $hash
+                        $object
 
-                }#end foreach user
-            }#end foreach group
-        } else {
-            Write-Output "No Group Found with the name: $($Name)"
+                    }#end foreach user
+                }#end foreach group
+            } else {
+                Write-Output "No Group Found with the name: $($groupName)"
+            }
         }
-        
     }
 
     End
