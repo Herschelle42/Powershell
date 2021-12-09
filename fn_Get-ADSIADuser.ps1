@@ -1,4 +1,3 @@
-
 function Get-ADSIADUser
 {
 <#
@@ -99,7 +98,10 @@ Param
             @{Name="Lockout Time"; Expression={if($_.lockouttime -gt 0) {[datetime]::FromFileTime($_.lockouttime)} else {"0"} }},
             @{Name="Last Logon"; Expression={[datetime]::FromFileTime($_.lastlogon)}},
             @{Name="Account Expires"; Expression={[datetime]::FromFileTime($_.accountexpires)}},
-            @{Name="Bad Password Time"; Expression={[datetime]::FromFileTime($_.badpasswordtime)}}
+            @{Name="Bad Password Time"; Expression={[datetime]::FromFileTime($_.badpasswordtime)}},
+            @{Name="Last Password Set"; Expression={[datetime]::FromFileTime($_.pwdlastset)}},
+            'manager',
+            'department'
         )
 
     }
