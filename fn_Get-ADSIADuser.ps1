@@ -95,6 +95,7 @@ Param
         $DefaultDisplaySet = ('name',
             'samaccountname',
             'userprincipalname',
+            'distinguishedname',
             @{Name="Lockout Time"; Expression={if($_.lockouttime -gt 0) {[datetime]::FromFileTime($_.lockouttime)} else {"0"} }},
             @{Name="Last Logon"; Expression={[datetime]::FromFileTime($_.lastlogon)}},
             @{Name="Account Expires"; Expression={[datetime]::FromFileTime($_.accountexpires)}},
