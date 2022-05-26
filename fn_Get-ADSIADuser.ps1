@@ -101,6 +101,7 @@ Param
             @{Name="Account Expires"; Expression={[datetime]::FromFileTime($_.accountexpires)}},
             @{Name="Bad Password Time"; Expression={[datetime]::FromFileTime($_.badpasswordtime)}},
             @{Name="Last Password Set"; Expression={[datetime]::FromFileTime($_.pwdlastset)}},
+            'whenchanged',
             'manager',
             'department'
         )
