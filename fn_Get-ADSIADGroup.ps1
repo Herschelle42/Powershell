@@ -38,19 +38,13 @@ Param
                 Position=0)]
     [Alias("Path")]
     [String[]]
-    $DN,
-    [Parameter(Mandatory=$true,
-                ValueFromPipelineByPropertyName=$true,
-                ParameterSetName="SID",
-                Position=0)]
-    [String[]]
-    $SID
+    $DN
 )
 
     Begin
     {
-        Write-Verbose "[INFO] Begin"
-        Write-Verbose "[INFO] ParameterSet: $($PSCmdlet.ParameterSetName)"
+        Write-Verbose "$(Get-Date) Begin"
+        Write-Verbose "$(Get-Date) ParameterSet: $($PSCmdlet.ParameterSetName)"
     }
     Process
     {
@@ -59,7 +53,7 @@ Param
         {
             $searchResult = foreach ($itemName in $Name)
             {
-                Write-Verbose "[INFO] ItemName: $($itemName)"
+                Write-Verbose "$(Get-Date) ItemName: $($itemName)"
                 ([adsisearcher]"(&(objectclass=group)(name=*$itemName*))").FindAll()
             }
         }
@@ -69,21 +63,12 @@ Param
         {
             $searchResult = foreach ($itemName in $DN)
             {
-                Write-Verbose "[INFO] ItemName: $($itemName)"
+                Write-Verbose "$(Get-Date) ItemName: $($itemName)"
                 ([adsisearcher]"(&(objectclass=group)(distinguishedname=*$itemName*))").FindAll()
             }
         }
-        
-        if ($PSCmdlet.ParameterSetName -eq "SID")
-        {
-            $searchResult = foreach ($itemName in $SID)
-            {
-                Write-Verbose "[INFO] ItemName: $($itemName)"
-                ([adsisearcher]"(&(objectclass=group)(objectSID=*$itemName*))").FindAll()
-            }
-        }
 
-        Write-Verbose "[INFO] Returning result as powershell object"
+        Write-Verbose "$(Get-Date) Returning result as powershell object"
         #create a custom object
         foreach ($item in $searchResult)
         {
@@ -107,6 +92,6 @@ Param
     }
     End
     {
-        Write-Verbose "[INFO] End"
+        Write-Verbose "$(Get-Date) End"
     }
 }
