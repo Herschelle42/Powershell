@@ -91,6 +91,7 @@ Param
 
     Begin
     {
+        Write-Verbose "$(Get-Date) ParameterSet: $($PSCmdlet.ParameterSetName)"
         #Used for the ShowAllProperties parameter
         $DefaultDisplaySet = ('name',
             'samaccountname',
@@ -115,6 +116,7 @@ Param
         {
             $searchResult = foreach ($itemName in $SamAccountName)
             {
+                Write-Verbose "$(Get-Date) Searching for: $($itemName)"
                 ([adsisearcher]"(&(objectClass=user)(samaccountname=*$itemName*))").FindAll()
             }
         }
@@ -123,6 +125,7 @@ Param
         {
             $searchResult = foreach ($itemName in $Name)
             {
+                Write-Verbose "$(Get-Date) Searching for: $($itemName)"
                 ([adsisearcher]"(&(objectClass=user)(name=*$itemName*))").FindAll()
             }
         }
@@ -131,14 +134,14 @@ Param
         {
             $searchResult = foreach ($itemName in $SID)
             {
-                Write-Verbose "[INFO] ItemName: $($itemName)"
+                Write-Verbose "$(Get-Date) Searching for: $($itemName)"
                 ([adsisearcher]"(&(objectclass=user)(objectSID=*$itemName*))").FindAll()
             }
         }
 
         if($Membership)
         {
-            Write-Verbose "[INFO] Returning membership only"
+            Write-Verbose "$(Get-Date) Returning Membership only"
             foreach ($item in $searchResult)
             {
                 foreach ($group in $item.Properties.memberof | sort)
@@ -154,7 +157,7 @@ Param
         } else {
 
 
-            Write-Verbose "[INFO] Returning result as powershell object"
+            Write-Verbose "$(Get-Date) Returning result as powershell object"
             #create a custom object
             foreach ($item in $searchResult)
             {
@@ -181,7 +184,7 @@ Param
                 if ($ShowAllProperties) {
                     $object
                 } else {
-                    Write-Verbose "[INFO] Return only a subset."
+                    Write-Verbose "$(Get-Date) Return only a subset."
                     $object | Select $DefaultDisplaySet
                 }
             }
