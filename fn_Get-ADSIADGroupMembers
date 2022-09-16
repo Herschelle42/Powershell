@@ -21,14 +21,14 @@ Param(
 
     Begin
     {
-        Write-Verbose "[INFO] Group Names: $($Name)"
+        Write-Verbose "$(Get-Date) Group Names: $($Name)"
     }
 
     Process
     {
         foreach ($groupName in $name) 
         {
-            Write-Verbose "[INFO] Group Name: $($groupName)"
+            Write-Verbose "$(Get-Date) Group Name: $($groupName)"
             $groupList = Get-ADSIADGroup -Name $groupName
 
             if ($groupList)
@@ -36,10 +36,10 @@ Param(
                 #in case there are multiple groups found?
                 foreach($group in $groupList)
                 {
-                    Write-Verbose "[INFO] Found group: $($group.samaccountname)"
+                    Write-Verbose "$(Get-Date) Found group: $($group.samaccountname)"
                     foreach ($user in ($group).member | sort)
                     {
-                        Write-Verbose "[INFO] Found user: $($user)"
+                        Write-Verbose "$(Get-Date) Found user: $($user)"
                         #have to get just the username to be able to look them up.
                         $userName = $user.substring(3,$user.IndexOf(",")-3)
                         $logonId = (Get-ADSIADuser -name $userName).samaccountname
@@ -61,7 +61,7 @@ Param(
 
     End
     {
-        Write-Verbose "[INFO] End"
+        Write-Verbose "$(Get-Date) End"
     }
 
 }
