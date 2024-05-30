@@ -12,5 +12,7 @@ $hash.tags = @(
         value = "FULL-FRI"
     }
 )
+$hash.customProperties = @{}
+$hash.customProperties["onboardedMachine"] = "true"
 
 $hash | ConvertTo-Json
