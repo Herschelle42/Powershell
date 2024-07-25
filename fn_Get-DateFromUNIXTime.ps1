@@ -8,10 +8,11 @@ function Get-DateFromUNIXTime {
   Get-DateFromUNIXTime -Seconds 1568093872
 #>
 
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName="Milliseconds")]
 Param (
     #Milliseconds from Epoch
     [Parameter(Mandatory,
+            ValueFromPipeline,
             ValueFromPipelineByPropertyName,
             Position=0,
             ParameterSetName="Milliseconds")]
@@ -38,4 +39,3 @@ Process {
 }
 
 }
-
