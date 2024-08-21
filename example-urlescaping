@@ -1,0 +1,23 @@
+<#
+EscapeUriString does not seem to replace all thie itmes that all APIs require
+So a few examples of hacking it
+#>
+
+$escapedURI = [uri]::EscapeUriString($uri)
+if($uri.IndexOf('$') -gt 0) {
+  $escapedURI = $escapedURI.Replace('$',"%24")
+  Write-Verbose "$(Get-Date) Escaped URI: $($escapedURI)"
+}
+if($uri.IndexOf("@") -gt 0) {
+  $escapedURI = $escapedURI.Replace("@","%40")
+  Write-Verbose "$(Get-Date) Escaped URI: $($escapedURI)"
+}
+.Replace(",","%2C")
+.Replace(":","%3A")
+
+#replacement of a specific forward slash
+$uri = "https://$($ComputerName)/iaas/api/cloud-accounts?`$expand=enabledRegions/cloudAccountId"
+if($uri.IndexOf('s/c') -gt 0) {
+  $escapedURI = $escapedURI.Replace('s/c',"s%2Fc")
+  Write-Verbose "$(Get-Date) Escaped URI: $($escapedURI)"
+}
